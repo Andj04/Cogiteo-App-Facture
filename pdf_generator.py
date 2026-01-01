@@ -17,7 +17,12 @@ def create_pdf(market_name, items_df, total_global, username):
     pdf.set_font("Arial", "", 11)
     pdf.cell(0, 7, f"Date : {datetime.now().strftime('%d/%m/%Y %H:%M')}", ln=True)
     pdf.cell(0, 7, f"Ref : {invoice_num}", ln=True)
-    pdf.ln(10)
+    pdf.ln(5)
+    
+    # Section Fournisseur (mise en évidence)
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(0, 8, f"Fournisseur : {market_name}", ln=True)
+    pdf.ln(5)
     
     # Tableau En-têtes
     pdf.set_fill_color(220, 220, 220)
