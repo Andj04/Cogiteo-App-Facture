@@ -56,17 +56,31 @@ Pour utiliser la fonctionnalité d'upload sur Google Drive, vous devez :
 
 2. Consultez le fichier [CONFIGURATION_OAUTH.md](CONFIGURATION_OAUTH.md) pour plus de détails.
 
+## ☁️ Déploiement sur Streamlit Community Cloud
+
+L'application peut être déployée gratuitement sur Streamlit Community Cloud :
+
+1. Poussez votre code sur GitHub
+2. Allez sur https://share.streamlit.io/
+3. Connectez-vous avec votre compte GitHub
+4. Sélectionnez votre dépôt et configurez l'application
+5. Configurez les secrets Google Drive dans les paramètres
+
+📖 **Guide complet** : Consultez [DEPLOY_STREAMLIT_CLOUD.md](DEPLOY_STREAMLIT_CLOUD.md) pour les instructions détaillées.
+
 ## 🏗️ Structure du projet
 
 ```
 Cogiteo-App-Facture/
-├── main.py                 # Application principale Streamlit
-├── database.py             # Gestion de la base de données SQLite
-├── drive_service.py        # Service Google Drive OAuth
-├── pdf_generator.py        # Génération de factures PDF
-├── requirements.txt        # Dépendances Python
-├── CONFIGURATION_OAUTH.md  # Guide de configuration OAuth
-└── README.md              # Ce fichier
+├── main.py                      # Application principale Streamlit
+├── database.py                  # Gestion de la base de données SQLite
+├── drive_service.py             # Service Google Drive OAuth
+├── pdf_generator.py             # Génération de factures PDF
+├── requirements.txt             # Dépendances Python
+├── CONFIGURATION_OAUTH.md       # Guide de configuration OAuth
+├── DEPLOY_STREAMLIT_CLOUD.md    # Guide de déploiement Streamlit Cloud
+├── .gitignore                   # Fichiers à ignorer par Git
+└── README.md                    # Ce fichier
 ```
 
 ## 🔒 Fichiers sensibles

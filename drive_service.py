@@ -1,5 +1,6 @@
 import os.path
 import socket
+import json
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -11,12 +12,27 @@ import streamlit as st
 SCOPES = ['https://www.googleapis.com/auth/drive.file']
 CLIENT_SECRET_FILE = 'client_secret.json'
 TOKEN_FILE = 'token.json'
-FOLDER_ID = "1pxs0MOmITeDtgFw9uA05NZdJJm381y41"
+
+# Récupérer FOLDER_ID depuis les secrets Streamlit ou utiliser la valeur par défaut
+try:
+    FOLDER_ID = st.secrets.get("GOOGLE_DRIVE", {}).get("FOLDER_ID", "1pxs0MOmITeDtgFw9uA05NZdJJm381y41")
+except:
+    FOLDER_ID = "1pxs0MOmITeDtgFw9uA05NZdJJm381y41"
 
 def get_drive_service():
     creds = None
     # Chargement du token existant
-    if os.path.exists(TOKEN_FILE):
+    # D'abord vérifier dans session_state (pour Streamlit Cloud)
+    if 'google_credentials' in st.session_state:
+        try:
+            creds = Credentials.from_authorized_user_info(json.loads(st.session_state['google_credentials']), SCOPES)
+        except Exception as e:
+            st.warning(f"Erreur lors du chargement du token de session : {e}")
+            del st.session_state['google_credentials']
+            creds = None
+    
+    # Sinon, essayer depuis le fichier (pour utilisation locale)
+    if not creds and os.path.exists(TOKEN_FILE):
         try:
             creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
         except Exception as e:
@@ -36,13 +52,50 @@ def get_drive_service():
                 creds = None
         
         if not creds:
-            if not os.path.exists(CLIENT_SECRET_FILE):
-                st.error("❌ Fichier 'client_secret.json' introuvable !")
-                st.info("💡 Assurez-vous que le fichier client_secret.json est dans le même dossier que l'application.")
-                return None
+            # Vérifier si on est sur Streamlit Cloud (secrets disponibles)
+            client_config = None
+            try:
+                if hasattr(st, 'secrets') and 'GOOGLE_DRIVE' in st.secrets:
+                    # Utiliser les secrets de Streamlit Cloud
+                    secrets = st.secrets['GOOGLE_DRIVE']
+                    client_config = {
+                        "installed": {
+                            "client_id": secrets.get("CLIENT_ID"),
+                            "client_secret": secrets.get("CLIENT_SECRET"),
+                            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                            "token_uri": "https://oauth2.googleapis.com/token",
+                            "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+                            "redirect_uris": secrets.get("REDIRECT_URIS", ["urn:ietf:wg:oauth:2.0:oob", "http://localhost"])
+                        }
+                    }
+                    if not client_config["installed"]["client_id"] or not client_config["installed"]["client_secret"]:
+                        client_config = None
+            except Exception as e:
+                st.warning(f"Impossible de charger les secrets Streamlit : {e}")
+                client_config = None
+            
+            # Si pas de secrets, essayer le fichier local
+            if not client_config:
+                if not os.path.exists(CLIENT_SECRET_FILE):
+                    st.error("❌ Configuration OAuth introuvable !")
+                    st.info("""
+                    💡 **Pour utilisation locale :**
+                    Assurez-vous que le fichier `client_secret.json` est dans le même dossier que l'application.
+                    
+                    💡 **Pour Streamlit Cloud :**
+                    Configurez les secrets dans les paramètres de l'application :
+                    - CLIENT_ID
+                    - CLIENT_SECRET
+                    - FOLDER_ID (optionnel)
+                    """)
+                    return None
+                # Charger depuis le fichier
+                with open(CLIENT_SECRET_FILE, 'r') as f:
+                    client_config = json.load(f)
             
             try:
-                flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
+                # Créer le flow depuis la config (fichier ou secrets)
+                flow = InstalledAppFlow.from_client_config(client_config, SCOPES)
                 
                 # Essayer d'abord avec un serveur local sur un port libre
                 # Tester plusieurs ports jusqu'à en trouver un libre
@@ -85,10 +138,7 @@ def get_drive_service():
                     st.markdown("---")
                     
                     # Créer un nouveau flow et modifier le redirect_uri pour OOB
-                    flow_console = InstalledAppFlow.from_client_secrets_file(
-                        CLIENT_SECRET_FILE, 
-                        SCOPES
-                    )
+                    flow_console = InstalledAppFlow.from_client_config(client_config, SCOPES)
                     # Définir le redirect_uri OOB (Out of Band) pour la méthode console
                     flow_console.redirect_uri = 'urn:ietf:wg:oauth:2.0:oob'
                     
@@ -122,11 +172,23 @@ def get_drive_service():
                     else:
                         return None
                 
-                # Sauvegarde du token
-                with open(TOKEN_FILE, 'w') as token:
-                    token.write(creds.to_json())
+                # Sauvegarde du token (seulement si pas sur Streamlit Cloud)
+                # Sur Streamlit Cloud, on utilise la session pour stocker temporairement
+                try:
+                    # Essayer de sauvegarder dans un fichier (local)
+                    if not os.getenv('STREAMLIT_SERVER'):
+                        with open(TOKEN_FILE, 'w') as token:
+                            token.write(creds.to_json())
+                        st.success("✅ Authentification réussie ! Token sauvegardé.")
+                    else:
+                        # Sur Streamlit Cloud, stocker dans session_state
+                        st.session_state['google_credentials'] = creds.to_json()
+                        st.success("✅ Authentification réussie !")
+                except Exception as e:
+                    # Si on ne peut pas sauvegarder, stocker en session
+                    st.session_state['google_credentials'] = creds.to_json()
+                    st.success("✅ Authentification réussie !")
                 
-                st.success("✅ Authentification réussie ! Token sauvegardé.")
                 st.rerun()  # Recharger pour utiliser les nouveaux credentials
                     
             except Exception as e:
