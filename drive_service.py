@@ -1,0 +1,168 @@
+import os.path
+import socket
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+import streamlit as st
+
+# Si tu modifies ces scopes, supprime le fichier token.json
+SCOPES = ['https://www.googleapis.com/auth/drive.file']
+CLIENT_SECRET_FILE = 'client_secret.json'
+TOKEN_FILE = 'token.json'
+FOLDER_ID = "1pxs0MOmITeDtgFw9uA05NZdJJm381y41"
+
+def get_drive_service():
+    creds = None
+    # Chargement du token existant
+    if os.path.exists(TOKEN_FILE):
+        try:
+            creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
+        except Exception as e:
+            st.warning(f"Erreur lors du chargement du token : {e}")
+            # Supprimer le token invalide
+            if os.path.exists(TOKEN_FILE):
+                os.remove(TOKEN_FILE)
+            creds = None
+    
+    # Si pas de credentials valides, on lance le flow OAuth
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            try:
+                creds.refresh(Request())
+            except Exception as e:
+                st.warning(f"Erreur lors du rafraîchissement du token : {e}")
+                creds = None
+        
+        if not creds:
+            if not os.path.exists(CLIENT_SECRET_FILE):
+                st.error("❌ Fichier 'client_secret.json' introuvable !")
+                st.info("💡 Assurez-vous que le fichier client_secret.json est dans le même dossier que l'application.")
+                return None
+            
+            try:
+                flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
+                
+                # Essayer d'abord avec un serveur local sur un port libre
+                # Tester plusieurs ports jusqu'à en trouver un libre
+                ports_to_try = [8080, 8090, 8091, 8092, 8093]
+                port_used = None
+                
+                def is_port_free(port):
+                    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                        try:
+                            s.bind(('localhost', port))
+                            return True
+                        except OSError:
+                            return False
+                
+                for port in ports_to_try:
+                    if is_port_free(port):
+                        port_used = port
+                        break
+                
+                if port_used:
+                    # Méthode avec serveur local (plus fluide)
+                    try:
+                        st.info(f"🔐 **Authentification Google Drive** - Port {port_used}")
+                        st.info("Une fenêtre de votre navigateur va s'ouvrir pour l'autorisation...")
+                        creds = flow.run_local_server(
+                            port=port_used,
+                            open_browser=True,
+                            authorization_prompt_message='',
+                            success_message='✅ Authentification réussie ! Vous pouvez fermer cette fenêtre.',
+                            redirect_uri_trailing_slash=False
+                        )
+                    except OSError as e:
+                        st.warning(f"⚠️ Le port {port_used} n'est plus disponible, passage en mode console...")
+                        port_used = None
+                
+                if not port_used:
+                    # Méthode console (fallback si serveur local ne fonctionne pas)
+                    # On utilise le redirect_uri OOB (Out of Band) pour la méthode console
+                    st.info("🔐 **Authentification Google Drive requise**")
+                    st.markdown("---")
+                    
+                    # Créer un nouveau flow et modifier le redirect_uri pour OOB
+                    flow_console = InstalledAppFlow.from_client_secrets_file(
+                        CLIENT_SECRET_FILE, 
+                        SCOPES
+                    )
+                    # Définir le redirect_uri OOB (Out of Band) pour la méthode console
+                    flow_console.redirect_uri = 'urn:ietf:wg:oauth:2.0:oob'
+                    
+                    authorization_url, _ = flow_console.authorization_url(prompt='consent')
+                    
+                    st.markdown("**📋 Étapes à suivre :**")
+                    st.markdown("1. Cliquez sur le lien ci-dessous pour autoriser l'application")
+                    st.markdown("2. Connectez-vous avec votre compte Google")
+                    st.markdown("3. Autorisez l'application à accéder à Google Drive")
+                    st.markdown("4. **Copiez le code d'autorisation** qui apparaît dans l'URL après 'code=' ou affiché sur la page")
+                    st.markdown("5. Collez-le dans le champ ci-dessous")
+                    
+                    st.markdown(f"[🔗 Cliquez ici pour autoriser l'application]({authorization_url})")
+                    
+                    # Champ pour saisir le code d'autorisation
+                    auth_code = st.text_input(
+                        "📝 Collez le code d'autorisation ici :",
+                        type="default",
+                        help="Le code d'autorisation se trouve dans l'URL après 'code=' ou affiché sur la page de confirmation"
+                    )
+                    
+                    if auth_code:
+                        try:
+                            # Échange du code contre les credentials avec le redirect_uri OOB
+                            flow_console.fetch_token(code=auth_code.strip())
+                            creds = flow_console.credentials
+                        except Exception as e:
+                            st.error(f"❌ Code invalide ou expiré : {e}")
+                            st.info("💡 Assurez-vous d'avoir copié le code complet depuis l'URL de redirection ou la page de confirmation.")
+                            return None
+                    else:
+                        return None
+                
+                # Sauvegarde du token
+                with open(TOKEN_FILE, 'w') as token:
+                    token.write(creds.to_json())
+                
+                st.success("✅ Authentification réussie ! Token sauvegardé.")
+                st.rerun()  # Recharger pour utiliser les nouveaux credentials
+                    
+            except Exception as e:
+                st.error(f"❌ Erreur lors de l'authentification OAuth : {e}")
+                st.info("""
+                **Solution pour l'erreur "Missing required parameter: redirect_uri" :**
+                
+                1. Allez dans [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+                2. Sélectionnez votre projet OAuth 2.0
+                3. Cliquez sur votre client OAuth pour l'éditer
+                4. Dans **"URIs de redirection autorisés"**, ajoutez :
+                   - `urn:ietf:wg:oauth:2.0:oob` (pour la méthode console)
+                   - `http://localhost:8080/` (pour la méthode serveur local)
+                   - `http://localhost:8090/` (port alternatif)
+                5. Cliquez sur **"ENREGISTRER"**
+                6. Téléchargez à nouveau `client_secret.json` et remplacez-le
+                7. Supprimez `token.json` si il existe
+                8. Relancez l'application
+                
+                ⚠️ **Important** : L'URI `urn:ietf:wg:oauth:2.0:oob` est essentiel pour la méthode console !
+                """)
+                return None
+
+    return build('drive', 'v3', credentials=creds)
+
+def upload_file(filepath, filename):
+    service = get_drive_service()
+    if not service:
+        return False
+    
+    try:
+        file_metadata = {'name': filename, 'parents': [FOLDER_ID]}
+        media = MediaFileUpload(filepath, resumable=True)
+        service.files().create(body=file_metadata, media_body=media, fields='id').execute()
+        return True
+    except Exception as e:
+        st.error(f"Erreur Drive : {e}")
+        return False
+
