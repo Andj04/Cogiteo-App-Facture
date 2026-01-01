@@ -1,12 +1,28 @@
 from fpdf import FPDF
 from datetime import datetime
+import os
 
 def create_pdf(market_name, items_df, total_global, username):
     pdf = FPDF()
     pdf.add_page()
     
-    # Header
+    # Logo (si disponible)
+    logo_path = "Logocogiteowf.png"
+    if os.path.exists(logo_path):
+        try:
+            pdf.image(logo_path, x=10, y=10, w=40)
+            pdf.ln(15)  # Espace après le logo
+        except:
+            pass
+    
+    # Titre de l'application
+    pdf.set_font("Arial", "B", 16)
+    pdf.set_text_color(31, 119, 180)  # Bleu Cogiteo
+    pdf.cell(0, 8, "COGITEO FACTURES", ln=True, align='C')
+    
+    # Header Facture
     pdf.set_font("Arial", "B", 18)
+    pdf.set_text_color(0, 0, 0)  # Noir
     pdf.cell(0, 10, f"FACTURE - {market_name.upper()}", ln=True, align='C')
     pdf.set_font("Arial", "I", 10)
     pdf.cell(0, 5, f"Acheteur : {username}", ln=True, align='C')
