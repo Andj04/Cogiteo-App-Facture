@@ -13,12 +13,16 @@ import streamlit as st
 SCOPES = ['https://www.googleapis.com/auth/drive.file']
 CLIENT_SECRET_FILE = 'client_secret.json'
 TOKEN_FILE = 'token.json'
+DEFAULT_FOLDER_ID = "1pxs0MOmITeDtgFw9uA05NZdJJm381y41"
 
-# Récupérer FOLDER_ID depuis les secrets Streamlit ou utiliser la valeur par défaut
-try:
-    FOLDER_ID = st.secrets.get("GOOGLE_DRIVE", {}).get("FOLDER_ID", "1pxs0MOmITeDtgFw9uA05NZdJJm381y41")
-except:
-    FOLDER_ID = "1pxs0MOmITeDtgFw9uA05NZdJJm381y41"
+def get_folder_id():
+    """Récupère FOLDER_ID depuis les secrets Streamlit ou utilise la valeur par défaut."""
+    try:
+        if hasattr(st, 'secrets') and 'GOOGLE_DRIVE' in st.secrets:
+            return st.secrets.get("GOOGLE_DRIVE", {}).get("FOLDER_ID", DEFAULT_FOLDER_ID)
+    except:
+        pass
+    return DEFAULT_FOLDER_ID
 
 def get_drive_service():
     creds = None
@@ -64,16 +68,12 @@ def get_drive_service():
                     is_streamlit_cloud = True
                     secrets = st.secrets['GOOGLE_DRIVE']
                     
-                    # Obtenir l'URL de l'application Streamlit
-                    try:
-                        # Obtenir l'URL de l'application depuis les secrets
+                    # Obtenir l'URL de l'application Streamlit depuis les secrets
                     streamlit_url = secrets.get("STREAMLIT_APP_URL", "")
                     if not streamlit_url:
                         st.error("❌ STREAMLIT_APP_URL manquant dans les secrets !")
                         st.info("💡 Ajoutez STREAMLIT_APP_URL dans les secrets avec l'URL complète de votre application Streamlit (ex: https://votre-app.streamlit.app)")
                         return None
-                    except:
-                        pass
                     
                     # Utiliser le flow "web" pour Streamlit Cloud (pas "installed")
                     client_config = {
@@ -294,7 +294,8 @@ def upload_file(filepath, filename):
         return False
     
     try:
-        file_metadata = {'name': filename, 'parents': [FOLDER_ID]}
+        folder_id = get_folder_id()
+        file_metadata = {'name': filename, 'parents': [folder_id]}
         media = MediaFileUpload(filepath, resumable=True)
         service.files().create(body=file_metadata, media_body=media, fields='id').execute()
         return True
