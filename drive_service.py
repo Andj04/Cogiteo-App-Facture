@@ -1,9 +1,10 @@
 import os.path
 import socket
 import json
+from urllib.parse import urlparse, parse_qs
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
+from google_auth_oauthlib.flow import InstalledAppFlow, Flow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 import streamlit as st
@@ -53,22 +54,39 @@ def get_drive_service():
         
         if not creds:
             # Vérifier si on est sur Streamlit Cloud (secrets disponibles)
+            is_streamlit_cloud = False
             client_config = None
+            streamlit_url = None
+            
             try:
                 if hasattr(st, 'secrets') and 'GOOGLE_DRIVE' in st.secrets:
                     # Utiliser les secrets de Streamlit Cloud
+                    is_streamlit_cloud = True
                     secrets = st.secrets['GOOGLE_DRIVE']
+                    
+                    # Obtenir l'URL de l'application Streamlit
+                    try:
+                        # Obtenir l'URL de l'application depuis les secrets
+                    streamlit_url = secrets.get("STREAMLIT_APP_URL", "")
+                    if not streamlit_url:
+                        st.error("❌ STREAMLIT_APP_URL manquant dans les secrets !")
+                        st.info("💡 Ajoutez STREAMLIT_APP_URL dans les secrets avec l'URL complète de votre application Streamlit (ex: https://votre-app.streamlit.app)")
+                        return None
+                    except:
+                        pass
+                    
+                    # Utiliser le flow "web" pour Streamlit Cloud (pas "installed")
                     client_config = {
-                        "installed": {
+                        "web": {
                             "client_id": secrets.get("CLIENT_ID"),
                             "client_secret": secrets.get("CLIENT_SECRET"),
                             "auth_uri": "https://accounts.google.com/o/oauth2/auth",
                             "token_uri": "https://oauth2.googleapis.com/token",
                             "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-                            "redirect_uris": secrets.get("REDIRECT_URIS", ["urn:ietf:wg:oauth:2.0:oob", "http://localhost"])
+                            "redirect_uris": [streamlit_url] if streamlit_url else []
                         }
                     }
-                    if not client_config["installed"]["client_id"] or not client_config["installed"]["client_secret"]:
+                    if not client_config["web"]["client_id"] or not client_config["web"]["client_secret"]:
                         client_config = None
             except Exception as e:
                 st.warning(f"Impossible de charger les secrets Streamlit : {e}")
@@ -86,6 +104,7 @@ def get_drive_service():
                     Configurez les secrets dans les paramètres de l'application :
                     - CLIENT_ID
                     - CLIENT_SECRET
+                    - STREAMLIT_APP_URL (URL complète de votre app, ex: https://votre-app.streamlit.app)
                     - FOLDER_ID (optionnel)
                     """)
                     return None
@@ -94,8 +113,63 @@ def get_drive_service():
                     client_config = json.load(f)
             
             try:
-                # Créer le flow depuis la config (fichier ou secrets)
-                flow = InstalledAppFlow.from_client_config(client_config, SCOPES)
+                # Sur Streamlit Cloud, utiliser Flow (web) au lieu de InstalledAppFlow
+                if is_streamlit_cloud:
+                    # Vérifier si on est dans le callback OAuth
+                    try:
+                        # Streamlit 1.27+
+                        query_params = st.query_params
+                    except:
+                        try:
+                            # Anciennes versions de Streamlit
+                            query_params = st.experimental_get_query_params()
+                        except:
+                            query_params = {}
+                    
+                    if 'code' in query_params:
+                        # On est de retour de l'autorisation Google
+                        flow = Flow.from_client_config(client_config, SCOPES)
+                        flow.redirect_uri = streamlit_url
+                        
+                        # Récupérer le code d'autorisation
+                        # Gérer les deux formats (dict ou liste)
+                        auth_code = query_params['code']
+                        if isinstance(auth_code, list):
+                            auth_code = auth_code[0]
+                        
+                        # Échanger le code contre les credentials
+                        flow.fetch_token(code=auth_code)
+                        creds = flow.credentials
+                        
+                        # Sauvegarder dans session_state
+                        st.session_state['google_credentials'] = creds.to_json()
+                        
+                        st.success("✅ Authentification réussie !")
+                        st.rerun()
+                        return build('drive', 'v3', credentials=creds)
+                    
+                    # Sinon, initier le flow d'autorisation
+                    flow = Flow.from_client_config(client_config, SCOPES)
+                    flow.redirect_uri = streamlit_url
+                    
+                    authorization_url, state = flow.authorization_url(
+                        access_type='offline',
+                        include_granted_scopes='true',
+                        prompt='consent'
+                    )
+                    
+                    st.info("🔐 **Authentification Google Drive requise**")
+                    st.markdown("---")
+                    st.markdown("**Cliquez sur le bouton ci-dessous pour vous connecter à Google Drive :**")
+                    st.markdown(f"[🔗 Se connecter à Google Drive]({authorization_url})")
+                    st.info("Après autorisation, vous serez automatiquement redirigé vers l'application.")
+                    
+                    # Stocker le state dans session pour vérification
+                    st.session_state['oauth_state'] = state
+                    return None
+                else:
+                    # Utilisation locale avec InstalledAppFlow
+                    flow = InstalledAppFlow.from_client_config(client_config, SCOPES)
                 
                 # Essayer d'abord avec un serveur local sur un port libre
                 # Tester plusieurs ports jusqu'à en trouver un libre

@@ -47,30 +47,36 @@ Après le déploiement, vous devez configurer les secrets pour Google Drive :
 [GOOGLE_DRIVE]
 CLIENT_ID = "votre-client-id.apps.googleusercontent.com"
 CLIENT_SECRET = "votre-client-secret"
+STREAMLIT_APP_URL = "https://votre-app.streamlit.app"
 FOLDER_ID = "1pxs0MOmITeDtgFw9uA05NZdJJm381y41"
-REDIRECT_URIS = ["urn:ietf:wg:oauth:2.0:oob", "http://localhost"]
 ```
 
 **Où trouver ces informations :**
 - Ouvrez votre fichier `client_secret.json` local
-- `CLIENT_ID` = `installed.client_id`
-- `CLIENT_SECRET` = `installed.client_secret`
-- `FOLDER_ID` = L'ID du dossier Google Drive où vous voulez stocker les factures
-- `REDIRECT_URIS` = Liste des URI de redirection configurés dans Google Cloud Console
+- `CLIENT_ID` = La valeur de `web.client_id` (par exemple : `123456789-abc.apps.googleusercontent.com`)
+- `CLIENT_SECRET` = La valeur de `web.client_secret`
+- `STREAMLIT_APP_URL` = L'URL complète de votre application Streamlit (par exemple : `https://cogiteo-app-facture.streamlit.app`)
+- `FOLDER_ID` = L'ID du dossier Google Drive où vous voulez stocker les factures (optionnel, valeur par défaut fournie)
+
+**Important :** `STREAMLIT_APP_URL` doit être l'URL exacte de votre application Streamlit. Vous la trouverez après le déploiement initial de l'application.
 
 4. Cliquez sur **"Save"**
 
 ### 5. Configurer Google Cloud Console pour Streamlit Cloud
 
-Vous devez ajouter l'URL de votre application Streamlit dans les URI de redirection autorisés :
+**IMPORTANT :** Vous devez configurer le type d'application OAuth en "Application Web" (pas "Application de bureau") et ajouter l'URL de votre application Streamlit :
 
 1. Allez sur [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
 2. Sélectionnez votre projet OAuth 2.0
-3. Cliquez sur votre client OAuth pour l'éditer
-4. Dans **"URIs de redirection autorisés"**, ajoutez :
-   - L'URL de votre application Streamlit (par exemple : `https://votre-app.streamlit.app`)
-   - Gardez aussi : `urn:ietf:wg:oauth:2.0:oob`
-5. Cliquez sur **"ENREGISTRER"**
+3. **Si vous avez un client de type "Application de bureau" :**
+   - Créez un **nouveau client OAuth 2.0** de type **"Application Web"**
+   - OU modifiez votre client existant pour qu'il soit de type "Application Web"
+4. Cliquez sur votre client OAuth (type "Application Web") pour l'éditer
+5. Dans **"URIs de redirection autorisés"**, ajoutez :
+   - **L'URL exacte de votre application Streamlit** (par exemple : `https://votre-app.streamlit.app`)
+   - ⚠️ Pas de `/` à la fin de l'URL
+6. Cliquez sur **"ENREGISTRER"**
+7. **Téléchargez le nouveau `client_secret.json`** et mettez à jour vos secrets dans Streamlit Cloud avec les nouvelles valeurs (`web.client_id` et `web.client_secret`)
 
 ### 6. Redéployer l'application
 
@@ -82,10 +88,11 @@ Après avoir configuré les secrets :
 
 ### Authentification OAuth sur Streamlit Cloud
 
-Sur Streamlit Cloud, l'authentification OAuth fonctionne différemment :
-- **Pas de serveur local** : La méthode avec serveur local ne fonctionnera pas
-- **Mode console uniquement** : Vous devrez utiliser la méthode "copier-coller du code"
-- **Session temporaire** : Les tokens sont stockés en session (perdus à chaque redémarrage)
+Sur Streamlit Cloud, l'authentification OAuth fonctionne en **mode 100% en ligne** :
+- **Redirection automatique** : Après autorisation Google, vous serez automatiquement redirigé vers l'application
+- **Pas besoin de copier-coller** : Le code OAuth est géré automatiquement via l'URL
+- **Session temporaire** : Les tokens sont stockés en session (perdus à chaque redémarrage de l'application)
+- **Application Web OAuth** : Utilise le flow OAuth "Web" au lieu de "Installed App"
 
 ### Base de données
 
