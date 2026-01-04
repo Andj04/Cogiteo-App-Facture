@@ -6,7 +6,8 @@ import unicodedata
 def encode_for_pdf(text):
     """
     Encode le texte pour FPDF (latin1).
-    Remplace les caractères non encodables par leurs équivalents ASCII.
+    Gère les caractères Unicode en les convertissant en latin1.
+    Les caractères non encodables en latin1 sont remplacés par '?'.
     """
     if text is None:
         return ""
@@ -14,21 +15,15 @@ def encode_for_pdf(text):
     # Convertir en chaîne si ce n'est pas déjà le cas
     text = str(text)
     
-    # Normaliser les caractères Unicode (NFD décompose les caractères accentués)
-    text = unicodedata.normalize('NFD', text)
-    
-    # Encoder en ASCII en ignorant les caractères non-ASCII, puis décoder
-    # Cela remplace les accents par leurs équivalents sans accent
-    text = text.encode('ascii', 'ignore').decode('ascii')
-    
-    # S'assurer que le texte peut être encodé en latin1
+    # Essayer d'encoder directement en latin1 (supporte les accents français)
     try:
+        # Vérifier si le texte peut être encodé en latin1
         text.encode('latin1')
+        return text
     except UnicodeEncodeError:
-        # Si l'encodage échoue encore, remplacer les caractères problématiques
-        text = text.encode('ascii', 'replace').decode('ascii')
-    
-    return text
+        # Si l'encodage échoue, remplacer les caractères problématiques
+        # Encoder en latin1 en remplaçant les caractères non encodables
+        return text.encode('latin1', 'replace').decode('latin1')
 
 def create_pdf(market_name, items_df, total_global, username, invoice_date=None):
     """
@@ -83,7 +78,8 @@ def create_pdf(market_name, items_df, total_global, username, invoice_date=None)
     time_str = datetime.now().strftime('%H:%M')
     
     pdf.set_font("Arial", "", 11)
-    pdf.cell(0, 7, f"Date : {date_str} à {time_str}", ln=True)
+    date_text = encode_for_pdf(f"Date : {date_str} a {time_str}")
+    pdf.cell(0, 7, date_text, ln=True)
     pdf.cell(0, 7, f"Ref : {invoice_num}", ln=True)
     pdf.ln(5)
     
