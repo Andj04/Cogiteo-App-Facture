@@ -132,6 +132,8 @@ if 'calculated_df' not in st.session_state:
     st.session_state['calculated_df'] = None
 if 'total_global' not in st.session_state:
     st.session_state['total_global'] = 0
+if 'invoice_date' not in st.session_state:
+    st.session_state['invoice_date'] = datetime.now().date()
 
 # --- ECRAN DE LOGIN / SIGNUP ---
 if not st.session_state['logged_in']:
@@ -229,6 +231,13 @@ else:
                 placeholder="Ex: Marché de Treichville, Grossiste ABC...",
                 help="Entrez le nom du fournisseur ou du marché"
             )
+        with col2:
+            invoice_date = st.date_input(
+                "📅 Date de la facture",
+                value=st.session_state['invoice_date'],
+                help="Sélectionnez la date de la facture (par défaut : aujourd'hui)"
+            )
+            st.session_state['invoice_date'] = invoice_date
         
         st.markdown("---")
         st.markdown("### 🛒 Articles à facturer")
@@ -303,7 +312,15 @@ else:
                         st.error("❌ Veuillez renseigner le nom du fournisseur !")
                     else:
                         with st.spinner("Génération du PDF en cours..."):
-                            fname = create_pdf(market_name, st.session_state['calculated_df'], st.session_state['total_global'], st.session_state['username'])
+                            # Récupérer la date depuis session_state
+                            invoice_date = st.session_state.get('invoice_date', datetime.now().date())
+                            fname = create_pdf(
+                                market_name, 
+                                st.session_state['calculated_df'], 
+                                st.session_state['total_global'], 
+                                st.session_state['username'],
+                                invoice_date
+                            )
                             
                             # On stocke le nom du fichier généré dans la session pour afficher les boutons d'action
                             st.session_state['current_pdf'] = fname

@@ -1,8 +1,18 @@
 from fpdf import FPDF
-from datetime import datetime
+from datetime import datetime, date
 import os
 
-def create_pdf(market_name, items_df, total_global, username):
+def create_pdf(market_name, items_df, total_global, username, invoice_date=None):
+    """
+    Crée un PDF de facture
+    
+    Args:
+        market_name: Nom du fournisseur/marché
+        items_df: DataFrame avec les articles
+        total_global: Montant total
+        username: Nom de l'utilisateur
+        invoice_date: Date de la facture (datetime.date ou None pour aujourd'hui)
+    """
     pdf = FPDF()
     pdf.add_page()
     
@@ -29,9 +39,21 @@ def create_pdf(market_name, items_df, total_global, username):
     pdf.ln(10)
     
     # Infos
-    invoice_num = f"FAC-{datetime.now().strftime('%Y%m%d%H%M')}"
+    # Utiliser la date fournie ou la date actuelle
+    if invoice_date is None:
+        invoice_date = datetime.now().date()
+    elif isinstance(invoice_date, datetime):
+        invoice_date = invoice_date.date()
+    
+    # Générer le numéro de facture avec la date sélectionnée
+    invoice_num = f"FAC-{invoice_date.strftime('%Y%m%d')}{datetime.now().strftime('%H%M')}"
+    
+    # Formater la date pour l'affichage
+    date_str = invoice_date.strftime('%d/%m/%Y')
+    time_str = datetime.now().strftime('%H:%M')
+    
     pdf.set_font("Arial", "", 11)
-    pdf.cell(0, 7, f"Date : {datetime.now().strftime('%d/%m/%Y %H:%M')}", ln=True)
+    pdf.cell(0, 7, f"Date : {date_str} à {time_str}", ln=True)
     pdf.cell(0, 7, f"Ref : {invoice_num}", ln=True)
     pdf.ln(5)
     
