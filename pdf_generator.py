@@ -1,6 +1,34 @@
 from fpdf import FPDF
 from datetime import datetime, date
 import os
+import unicodedata
+
+def encode_for_pdf(text):
+    """
+    Encode le texte pour FPDF (latin1).
+    Remplace les caractères non encodables par leurs équivalents ASCII.
+    """
+    if text is None:
+        return ""
+    
+    # Convertir en chaîne si ce n'est pas déjà le cas
+    text = str(text)
+    
+    # Normaliser les caractères Unicode (NFD décompose les caractères accentués)
+    text = unicodedata.normalize('NFD', text)
+    
+    # Encoder en ASCII en ignorant les caractères non-ASCII, puis décoder
+    # Cela remplace les accents par leurs équivalents sans accent
+    text = text.encode('ascii', 'ignore').decode('ascii')
+    
+    # S'assurer que le texte peut être encodé en latin1
+    try:
+        text.encode('latin1')
+    except UnicodeEncodeError:
+        # Si l'encodage échoue encore, remplacer les caractères problématiques
+        text = text.encode('ascii', 'replace').decode('ascii')
+    
+    return text
 
 def create_pdf(market_name, items_df, total_global, username, invoice_date=None):
     """
@@ -33,9 +61,11 @@ def create_pdf(market_name, items_df, total_global, username, invoice_date=None)
     # Header Facture
     pdf.set_font("Arial", "B", 18)
     pdf.set_text_color(0, 0, 0)  # Noir
-    pdf.cell(0, 10, f"FACTURE - {market_name.upper()}", ln=True, align='C')
+    market_name_encoded = encode_for_pdf(market_name)
+    pdf.cell(0, 10, f"FACTURE - {market_name_encoded.upper()}", ln=True, align='C')
     pdf.set_font("Arial", "I", 10)
-    pdf.cell(0, 5, f"Acheteur : {username}", ln=True, align='C')
+    username_encoded = encode_for_pdf(username)
+    pdf.cell(0, 5, f"Acheteur : {username_encoded}", ln=True, align='C')
     pdf.ln(10)
     
     # Infos
@@ -59,7 +89,7 @@ def create_pdf(market_name, items_df, total_global, username, invoice_date=None)
     
     # Section Fournisseur (mise en évidence)
     pdf.set_font("Arial", "B", 12)
-    pdf.cell(0, 8, f"Fournisseur : {market_name}", ln=True)
+    pdf.cell(0, 8, f"Fournisseur : {market_name_encoded}", ln=True)
     pdf.ln(5)
     
     # Tableau En-têtes
@@ -74,9 +104,9 @@ def create_pdf(market_name, items_df, total_global, username, invoice_date=None)
     # Tableau Données
     pdf.set_font("Arial", "", 10)
     for _, row in items_df.iterrows():
-        # On s'assure que les valeurs sont bien formatées
-        p = str(row['Produit'])
-        u = str(row['Unité'])
+        # On s'assure que les valeurs sont bien formatées et encodées
+        p = encode_for_pdf(str(row['Produit']))
+        u = encode_for_pdf(str(row['Unité']))
         q = row['Quantité']
         pu = row['Prix Unitaire']
         tot = row['Total Article']
