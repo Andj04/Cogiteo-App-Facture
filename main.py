@@ -149,16 +149,43 @@ st.markdown("""
         z-index: 1000;
     }
     
-    /* Bouton primaire vert */
-    button[kind="primary"] {
+    /* Bouton primaire - par défaut bleu pour login */
+    button[kind="primary"]:not(.login-btn-blue) {
         background: var(--primary-green) !important;
         color: white !important;
         border: none !important;
         font-weight: 600 !important;
     }
     
-    button[kind="primary"]:hover {
+    button[kind="primary"]:not(.login-btn-blue):hover {
         background: #218838 !important;
+    }
+    
+    /* Bouton connexion bleu */
+    button[kind="primary"][data-testid*="login_btn"],
+    button[kind="primary"][data-testid*="signup_btn"] {
+        background: #1f77b4 !important;
+        color: white !important;
+        border: none !important;
+        font-weight: 500 !important;
+    }
+    
+    button[kind="primary"][data-testid*="login_btn"]:hover,
+    button[kind="primary"][data-testid*="signup_btn"]:hover {
+        background: #1565c0 !important;
+    }
+    
+    /* Style du bouton Google Drive */
+    button[data-testid*="google_drive_btn"] {
+        background: white !important;
+        color: #3c4043 !important;
+        border: 1px solid #dadce0 !important;
+        font-weight: 500 !important;
+        box-shadow: none !important;
+    }
+    
+    button[data-testid*="google_drive_btn"]:hover {
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12) !important;
     }
     
     /* Input styling */
@@ -233,47 +260,175 @@ st.markdown("""
     
     /* Login page styling */
     .login-page {
-        max-width: 450px;
+        max-width: 420px;
         margin: 0 auto;
-        padding: 40px 20px;
+        padding: 20px;
     }
     
     .login-header {
         text-align: center;
-        margin-bottom: 40px;
+        margin-bottom: 35px;
     }
     
     .login-title {
-        font-size: 1.8rem;
+        font-size: 1.75rem;
         font-weight: 700;
         color: var(--text-dark);
-        margin: 20px 0 10px;
+        margin: 15px 0 8px;
+        line-height: 1.3;
     }
     
     .login-subtitle {
         color: var(--text-gray);
-        font-size: 1rem;
+        font-size: 0.95rem;
+        margin: 0;
+    }
+    
+    .google-drive-btn {
+        width: 100%;
+        padding: 12px 20px;
+        background: white;
+        border: 1px solid #dadce0;
+        border-radius: 4px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: #3c4043;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin-bottom: 15px;
+        transition: box-shadow 0.2s;
+    }
+    
+    .google-drive-btn:hover {
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    }
+    
+    .google-icon {
+        width: 20px;
+        height: 20px;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%234285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="%2334A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="%23FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="%23EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>') no-repeat center;
+        background-size: contain;
+    }
+    
+    .google-confirm {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin: 15px 0 25px;
+        color: #28a745;
+        font-size: 0.9rem;
+    }
+    
+    .google-confirm-check {
+        color: #28a745;
+        font-size: 1.1rem;
+        font-weight: bold;
     }
     
     .divider-or {
         display: flex;
         align-items: center;
         text-align: center;
-        margin: 30px 0;
-        color: var(--text-gray);
+        margin: 25px 0;
+        color: #5f6368;
+        font-size: 0.875rem;
     }
     
     .divider-or::before,
     .divider-or::after {
         content: '';
         flex: 1;
-        border-bottom: 1px solid var(--border-color);
+        border-bottom: 1px solid #dadce0;
     }
     
     .divider-or span {
         padding: 0 15px;
         font-weight: 500;
+    }
+    
+    .input-container {
+        position: relative;
+        margin-bottom: 20px;
+    }
+    
+    .input-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #5f6368;
+        font-size: 1.1rem;
+        z-index: 1;
+    }
+    
+    .input-field {
+        padding-left: 40px !important;
+    }
+    
+    .password-container {
+        position: relative;
+    }
+    
+    .password-toggle {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #5f6368;
+        cursor: pointer;
+        font-size: 1.1rem;
+        z-index: 2;
+        padding: 5px;
+    }
+    
+    .forgot-password-link {
+        text-align: right;
+        margin-top: -12px;
+        margin-bottom: 8px;
+        font-size: 0.875rem;
+    }
+    
+    .forgot-password-link a {
+        color: #1f77b4;
+        text-decoration: none;
+    }
+    
+    .forgot-password-link a:hover {
+        text-decoration: underline;
+    }
+    
+    .login-btn-blue {
+        background: #1f77b4 !important;
+        color: white !important;
+        border: none !important;
+        font-weight: 500 !important;
+    }
+    
+    .login-btn-blue:hover {
+        background: #1565c0 !important;
+    }
+    
+    .signup-link {
+        text-align: center;
+        margin-top: 25px;
+        color: #5f6368;
         font-size: 0.9rem;
+    }
+    
+    .signup-link a {
+        color: #1f77b4;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    
+    .signup-link a:hover {
+        text-decoration: underline;
     }
     
     .footer-login {
@@ -282,15 +437,15 @@ st.markdown("""
         align-items: center;
         margin-top: 50px;
         padding-top: 20px;
-        border-top: 1px solid var(--border-color);
-        color: var(--text-gray);
-        font-size: 0.9rem;
+        border-top: 1px solid #e0e0e0;
+        color: #5f6368;
+        font-size: 0.875rem;
     }
     
     .footer-login-item {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
     }
     
     /* Webcam area */
@@ -357,15 +512,16 @@ def load_logo():
     return None
 
 def render_login_page():
-    """Page de connexion selon le design"""
+    """Page de connexion selon le design exact"""
     # Gradient header
     st.markdown('<div class="gradient-header"></div>', unsafe_allow_html=True)
     
+    # Logo
     col_logo, col_empty = st.columns([1, 3])
     with col_logo:
         logo = load_logo()
         if logo:
-            st.image(logo, width=120)
+            st.image(logo, width=140)
     
     st.markdown('<div class="login-page">', unsafe_allow_html=True)
     
@@ -377,9 +533,40 @@ def render_login_page():
     </div>
     """, unsafe_allow_html=True)
     
-    # Bouton Google Drive
-    if st.button("🔵 Se connecter avec Google Drive", use_container_width=True, type="primary"):
-        # Tentative de connexion Google Drive
+    # Bouton Google Drive avec logo Google
+    st.markdown("""
+    <style>
+    .google-btn-wrapper {
+        width: 100%;
+        margin-bottom: 15px;
+    }
+    .google-btn-wrapper button {
+        width: 100%;
+        padding: 12px 20px;
+        background: white;
+        border: 1px solid #dadce0;
+        border-radius: 4px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: #3c4043;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        transition: box-shadow 0.2s;
+    }
+    .google-btn-wrapper button:hover {
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    }
+    </style>
+    <div class="google-btn-wrapper">
+    """, unsafe_allow_html=True)
+    
+    google_clicked = st.button("🔵 Se connecter avec Google Drive", use_container_width=True, key="google_drive_btn")
+    st.markdown("</div>", unsafe_allow_html=True)
+    
+    if google_clicked:
         service = get_drive_service()
         if service:
             st.success("✅ Connexion Google Drive réussie !")
@@ -388,46 +575,66 @@ def render_login_page():
             st.info("💡 Vous serez redirigé vers Google pour l'autorisation")
     
     st.markdown("""
-    <div style="display: flex; align-items: center; gap: 8px; margin: 15px 0; justify-content: center; color: var(--primary-green);">
-        <span style="font-size: 1.2rem;">✓</span>
-        <span style="font-size: 0.9rem; font-weight: 500;">Vos factures sont stockées directement sur votre Drive personnel</span>
+    <div class="google-confirm">
+        <span class="google-confirm-check">✓</span>
+        <span>Vos factures sont stockées directement sur votre Drive personnel</span>
     </div>
     """, unsafe_allow_html=True)
     
     # Séparateur
     st.markdown('<div class="divider-or"><span>OU AVEC EMAIL</span></div>', unsafe_allow_html=True)
     
-    # Formulaire email
-    col_email1, col_email2 = st.columns([1, 20])
-    with col_email2:
-        st.markdown('<span style="font-size: 1.5rem;">✉️</span>', unsafe_allow_html=True)
+    # Champ Email avec icône
+    st.markdown("""
+    <style>
+    div[data-testid="stTextInput"]:has(input[placeholder*="exemple@restaurant.com"]) label {
+        display: none;
+    }
+    </style>
+    """, unsafe_allow_html=True)
     
-    username = st.text_input(
-        "Email",
-        placeholder="exemple@restaurant.com",
-        label_visibility="visible",
-        key="login_email"
-    )
+    col_email_icon, col_email_input = st.columns([0.1, 0.9])
+    with col_email_icon:
+        st.markdown('<div style="padding-top: 38px; text-align: center; color: #5f6368; font-size: 1.1rem;">✉</div>', unsafe_allow_html=True)
+    with col_email_input:
+        username = st.text_input(
+            "Email",
+            placeholder="exemple@restaurant.com",
+            label_visibility="visible",
+            key="login_email"
+        )
     
-    col_pass1, col_pass2, col_pass3 = st.columns([1, 15, 4])
-    with col_pass2:
-        st.markdown('<span style="font-size: 1.5rem;">🔒</span>', unsafe_allow_html=True)
+    # Champ Mot de passe avec icône et toggle
+    if 'show_password' not in st.session_state:
+        st.session_state['show_password'] = False
     
-    password = st.text_input(
-        "Mot de passe",
-        type='password',
-        placeholder="••••••••",
-        label_visibility="visible",
-        key="login_password"
-    )
+    col_pass_icon, col_pass_input, col_pass_toggle = st.columns([0.1, 0.75, 0.15])
+    with col_pass_icon:
+        st.markdown('<div style="padding-top: 38px; text-align: center; color: #5f6368; font-size: 1.1rem;">🔒</div>', unsafe_allow_html=True)
+    with col_pass_input:
+        password = st.text_input(
+            "Mot de passe",
+            type='password' if not st.session_state['show_password'] else 'text',
+            placeholder="••••••••",
+            label_visibility="visible",
+            key="login_password"
+        )
+    with col_pass_toggle:
+        st.markdown('<div style="padding-top: 38px;"></div>', unsafe_allow_html=True)
+        if st.button("👁", key="toggle_password", help="Afficher/Masquer le mot de passe"):
+            st.session_state['show_password'] = not st.session_state['show_password']
+            st.rerun()
     
-    col_link1, col_link2 = st.columns([3, 1])
-    with col_link2:
-        st.markdown('<div style="text-align: right; margin-top: -10px;"><a href="#" style="color: var(--primary-blue); text-decoration: none; font-size: 0.9rem;">Mot de passe oublié ?</a></div>', unsafe_allow_html=True)
+    # Lien mot de passe oublié
+    st.markdown("""
+    <div class="forgot-password-link">
+        <a href="#">Mot de passe oublié ?</a>
+    </div>
+    """, unsafe_allow_html=True)
     
-    # Bouton connexion
+    # Bouton connexion (bleu)
     if st.session_state.get('signup_mode', False):
-        if st.button("S'inscrire", use_container_width=True, type="primary"):
+        if st.button("S'inscrire", use_container_width=True, type="primary", key="signup_btn"):
             if username and password:
                 if create_user(username, password):
                     st.success("✅ Compte créé avec succès !")
@@ -438,7 +645,7 @@ def render_login_page():
             else:
                 st.warning("⚠️ Veuillez remplir tous les champs")
     else:
-        if st.button("Se connecter", use_container_width=True, type="primary"):
+        if st.button("Se connecter", use_container_width=True, key="login_btn", type="primary"):
             if username and password:
                 if check_login(username, password):
                     st.session_state['logged_in'] = True
@@ -451,13 +658,15 @@ def render_login_page():
                 st.warning("⚠️ Veuillez remplir tous les champs")
     
     # Lien s'inscrire
-    st.markdown('<div style="text-align: center; margin-top: 20px; color: var(--text-gray);">Vous n\'avez pas de compte ? <span style="color: var(--primary-blue); font-weight: 600;">S\'inscrire</span></div>', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="signup-link">
+        Vous n'avez pas de compte ? <a href="#" onclick="document.querySelector('[data-testid=baseButton-secondary]').click(); return false;">S'inscrire</a>
+    </div>
+    """, unsafe_allow_html=True)
     
-    col_sign1, col_sign2 = st.columns([1, 1])
-    with col_sign2:
-        if st.button("S'inscrire", key="signup_toggle", use_container_width=True, type="secondary"):
-            st.session_state['signup_mode'] = not st.session_state.get('signup_mode', False)
-            st.rerun()
+    if st.button("Toggle Signup", key="signup_toggle", use_container_width=False, type="secondary"):
+        st.session_state['signup_mode'] = not st.session_state.get('signup_mode', False)
+        st.rerun()
     
     st.markdown('</div>', unsafe_allow_html=True)
     
