@@ -532,6 +532,7 @@ def render_login_page():
             st.image(logo, width=140)
     
     st.markdown('<div class="login-page">', unsafe_allow_html=True)
+    st.markdown('<div class="login-card">', unsafe_allow_html=True)
     
     # Header text
     st.markdown("""
