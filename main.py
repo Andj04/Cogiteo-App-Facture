@@ -369,14 +369,14 @@ if not st.session_state['logged_in']:
                 else:
                     st.warning("Veuillez remplir tous les champs")
         
-        # Séparateur OU
-        st.markdown('<div class="divider-or"><span>OU</span></div>', unsafe_allow_html=True)
-        
-        # Bouton Google Drive
-        if st.button("🔵 Continuer avec Google Drive", use_container_width=True):
-            st.info("💡 Vos factures sont stockées directement sur votre Drive personnel")
-        
         st.markdown('</div>', unsafe_allow_html=True)
+        
+        # Information sur Google Drive
+        st.markdown("""
+        <div style="background: #e3f2fd; padding: 15px; border-radius: 12px; margin-top: 20px; text-align: center; color: #1f77b4;">
+            <div style="font-weight: 600; margin-bottom: 5px;">💡 Vos factures sont stockées directement sur votre Drive personnel</div>
+        </div>
+        """, unsafe_allow_html=True)
     
     # Footer
     st.markdown('<div class="app-footer">', unsafe_allow_html=True)
@@ -520,14 +520,8 @@ else:
         st.markdown("<br>", unsafe_allow_html=True)
         
         # Section articles
-        col_art1, col_art2 = st.columns([3, 1])
-        with col_art1:
-            st.markdown("### 🛒 Articles Achetés")
-        with col_art2:
-            if st.button("🔄 Historique", use_container_width=True):
-                pass  # Action à implémenter
-        
-        st.markdown('<div style="margin-bottom: 15px; color: #6c757d;">Ajoutez vos articles ci-dessous</div>', unsafe_allow_html=True)
+        st.markdown("### 🛒 Articles Achetés")
+        st.markdown('<div style="margin-bottom: 15px; color: #6c757d;">Ajoutez vos articles ci-dessous. Utilisez le bouton "+" pour ajouter des lignes.</div>', unsafe_allow_html=True)
 
         # Configuration du Data Editor
         # On initialise avec 1 ligne vide si c'est la première fois
@@ -559,10 +553,6 @@ else:
                     <span class="total-amount">{current_total:,.0f} FCFA</span>
                 </div>
                 """, unsafe_allow_html=True)
-        
-        # Bouton ajouter une ligne (visuellement intégré)
-        if st.button("➕ Ajouter une ligne", use_container_width=False):
-            st.rerun()
         
         st.markdown("<br>", unsafe_allow_html=True)
         
