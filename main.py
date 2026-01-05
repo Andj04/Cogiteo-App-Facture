@@ -414,7 +414,6 @@ else:
         
         # Historique stylisé
         st.markdown("### 📂 Activités Récentes")
-        st.markdown('<div style="text-align: right; margin-bottom: 10px;"><a href="#" style="color: #1f77b4; text-decoration: none; font-size: 0.9rem;">Voir tout →</a></div>', unsafe_allow_html=True)
         
         history = get_user_history(st.session_state['username'])
         if not history.empty:
@@ -458,32 +457,11 @@ else:
             </div>
             """, unsafe_allow_html=True)
 
-    # Page d'accueil avec cartes d'action
+    # Page d'accueil avec message de bienvenue
     st.markdown('<div class="welcome-section">', unsafe_allow_html=True)
     st.markdown(f'<div class="welcome-greeting">Bonjour, {st.session_state["username"]} 👋</div>', unsafe_allow_html=True)
     st.markdown('<div class="welcome-title">Gérez vos factures</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Cartes d'action principales
-    col_action1, col_action2 = st.columns(2)
-    with col_action1:
-        st.markdown("""
-        <div class="modern-card">
-            <h3 style="margin-top: 0; color: #212529;">📝 Saisie Rapide</h3>
-            <p style="color: #6c757d; margin-bottom: 15px;">Créer une nouvelle facture</p>
-            <div style="background: #e3f2fd; padding: 8px; border-radius: 8px; text-align: center; color: #1f77b4; font-weight: 600;">Manuel</div>
-        </div>
-        """, unsafe_allow_html=True)
-    with col_action2:
-        st.markdown("""
-        <div class="modern-card card-primary" style="color: white;">
-            <h3 style="margin-top: 0; color: white;">📷 Scanner une photo</h3>
-            <p style="margin-bottom: 15px; opacity: 0.9;">Ticket ou bon papier</p>
-            <span style="background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">Recommandé</span>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    st.markdown("---")
     
     tab1, tab2 = st.tabs(["📝 Créer Facture", "📷 Scan Photo"])
 
