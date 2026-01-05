@@ -262,7 +262,15 @@ st.markdown("""
     .login-page {
         max-width: 420px;
         margin: 0 auto;
-        padding: 20px;
+        padding: 0;
+    }
+    
+    .login-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), 0 4px 16px rgba(0, 0, 0, 0.08);
+        padding: 40px 35px;
+        margin: 20px 0;
     }
     
     .login-header {
@@ -668,7 +676,8 @@ def render_login_page():
         st.session_state['signup_mode'] = not st.session_state.get('signup_mode', False)
         st.rerun()
     
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)  # Fermeture login-card
+    st.markdown('</div>', unsafe_allow_html=True)  # Fermeture login-page
     
     # Footer
     st.markdown("""
