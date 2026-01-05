@@ -630,20 +630,22 @@ def render_nouvelle_facture():
         key="editor"
     )
     
-    # Stocker le dataframe dans session_state
-    st.session_state['editor_df'] = edited_df
-    
-    # Calculer le total en temps réel
+    # Calculer le total en temps réel et compter les articles
     clean_df = edited_df[edited_df["Produit"].str.len() > 0].copy()
     if not clean_df.empty:
         clean_df["Total Article"] = clean_df["Quantité"] * clean_df["Prix Unitaire"]
         total_global = clean_df["Total Article"].sum()
+        article_count = len(clean_df)
         st.session_state['calculated_df'] = clean_df
         st.session_state['total_global'] = total_global
     else:
         st.session_state['calculated_df'] = None
         st.session_state['total_global'] = 0
         total_global = 0
+        article_count = 0
+    
+    # Afficher le compteur d'articles
+    st.caption(f"{article_count} articles ajoutés")
     
     st.markdown("<br>", unsafe_allow_html=True)
     
