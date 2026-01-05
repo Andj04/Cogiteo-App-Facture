@@ -385,7 +385,7 @@ def render_login_page():
             st.success("✅ Connexion Google Drive réussie !")
             st.session_state['google_connected'] = True
         else:
-            st.info("💡 Vous serez redirigé vers Google pour l'autorisation")")
+            st.info("💡 Vous serez redirigé vers Google pour l'autorisation")
     
     st.markdown("""
     <div style="display: flex; align-items: center; gap: 8px; margin: 15px 0; justify-content: center; color: var(--primary-green);">
@@ -838,6 +838,8 @@ else:
         render_historique()
     elif current_page == "nouvelle_facture":
         render_nouvelle_facture()
+    elif current_page == "numeriser":
+        render_numeriser()
     elif current_page == "fournisseurs":
         render_fournisseurs()
     elif current_page == "parametres":
